@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MWeibo</string>
+
+    <!-- Strings related to Auth -->
+    <string name="weibosdk_toast_auth_canceled">The auth is canceled!</string>
+    <string name="weibosdk_toast_auth_failed">The auth is failed!</string>
+    <string name="weibosdk_toast_auth_success">Auth success</string>
+    <string name="weibosdk_token_has_existed">Token has existed</string>
+</resources>
