@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.wanghui.mweibo;
+package com.wanghui.weibo.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -92,5 +92,10 @@ public class AccessTokenKeeper {
         Editor editor = pref.edit();
         editor.clear();
         editor.commit();
+    }
+
+    public static boolean isTokenExist(Context context) {
+        SharedPreferences pref = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_APPEND);
+        return !pref.getString(KEY_UID, "").equals("");
     }
 }

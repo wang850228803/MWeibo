@@ -1,4 +1,4 @@
-package com.example.wanghui.mweibo;
+package com.wanghui.weibo.util;
 
 /**
  * Created by wanghui on 16-6-29.
