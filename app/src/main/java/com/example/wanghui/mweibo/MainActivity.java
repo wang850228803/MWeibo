@@ -1,19 +1,12 @@
 package com.example.wanghui.mweibo;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sina.weibo.sdk.auth.AuthInfo;
@@ -24,14 +17,10 @@ import com.sina.weibo.sdk.exception.WeiboException;
 import com.sina.weibo.sdk.net.RequestListener;
 import com.sina.weibo.sdk.openapi.StatusesAPI;
 import com.sina.weibo.sdk.openapi.models.ErrorInfo;
-import com.sina.weibo.sdk.openapi.models.Status;
 import com.sina.weibo.sdk.openapi.models.StatusList;
 import com.sina.weibo.sdk.utils.LogUtil;
-import com.wanghui.image.AsyncImageLoader;
 import com.wanghui.weibo.util.AccessTokenKeeper;
 import com.wanghui.weibo.util.Constants;
-
-import java.util.List;
 
 public class MainActivity extends Activity {
 
@@ -58,7 +47,7 @@ public class MainActivity extends Activity {
         btn = (Button)findViewById(R.id.login);
         btn.setOnClickListener(mListener);
         lv = (ListView) findViewById(R.id.listview);
-        mAdapter = new WeiboAdapter(this);
+        mAdapter = new WeiboAdapter(this, lv);
         lv.setAdapter(mAdapter);
 
         if (AccessTokenKeeper.isTokenExist(this)) {
@@ -178,92 +167,6 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
         }
     };
-
-    private class WeiboAdapter extends BaseAdapter {
-        List<Status> statusList;
-        LayoutInflater inflater;
-        MViewHolder holder;
-        AsyncImageLoader loader;
-
-        public WeiboAdapter(Context cxt) {
-            inflater = LayoutInflater.from(cxt);
-            loader = new AsyncImageLoader();
-        }
-
-        public void addStatus(List<Status> list) {
-            this.statusList = list;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = inflater.inflate(R.layout.item, null);
-                holder = new MViewHolder();
-                holder.icon = (ImageView) convertView.findViewById(R.id.imageView);
-                holder.username = (TextView) convertView.findViewById(R.id.name);
-                holder.created_at = (TextView) convertView.findViewById(R.id.time);
-                holder.text = (TextView) convertView.findViewById(R.id.content);
-                holder.reposts_count = (TextView) convertView.findViewById(R.id.repost);
-                holder.comments_count = (TextView) convertView.findViewById(R.id.comment);
-                convertView.setTag(holder);
-            } else {
-                holder = (MViewHolder) convertView.getTag();
-            }
-
-            Status status = statusList.get(position);
-            if (status.user != null) {
-                if (status.user.url != null && !status.user.profile_image_url.equals(""))
-                    holder.icon.setTag(status.user.profile_image_url);
-                    holder.icon.setImageDrawable(loader.loadImage(status.user.profile_image_url, new AsyncImageLoader.ILoadedListener() {
-                        @Override
-                        public void onImageLoaded(String url, Drawable image) {
-                            ImageView iv = (ImageView) lv.findViewWithTag(url);
-                            if (iv != null)
-                                iv.setImageDrawable(image);
-                        }
-                    }));
-
-                holder.username.setText(status.user.screen_name);
-            }
-            holder.created_at.setText(status.created_at);
-            holder.text.setText(status.text);
-            holder.reposts_count.setText("转发(" + status.reposts_count + ")");
-            holder.comments_count.setText("评论(" + status.comments_count + ")");
-            return convertView;
-        }
-
-        @Override
-        public int getCount() {
-            if (statusList != null)
-                return statusList.size();
-            else
-                return 0;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-    }
-
-    public final class MViewHolder {
-        public ImageView icon;
-        /** 微博作者的用户信息字段 */
-        public TextView username;
-        public TextView created_at;
-        /** 微博信息内容 */
-        public TextView text;
-        /** 转发数 */
-        public TextView reposts_count;
-        /** 评论数 */
-        public TextView comments_count;
-    }
 
 }
 

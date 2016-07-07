@@ -17,12 +17,30 @@ import java.util.Map;
  */
 public class AsyncImageLoader {
     Map<String, SoftReference<Drawable>> cache;
+    boolean allowLoad = true;
+    Object lock = new Object();
+    int start;
+    int end;
 
     public AsyncImageLoader() {
         cache = new HashMap<String, SoftReference<Drawable>>();
     }
 
-    public Drawable loadImage(final String  url, final ILoadedListener listener) {
+    public void lock() {
+        allowLoad = false;
+    }
+
+    public void unlock(int start, int end) {
+        allowLoad = true;
+        synchronized (lock) {
+            lock.notifyAll();
+        }
+        this.start = start;
+        this.end = end;
+    }
+
+    public Drawable loadImage(final int position, final String  url, final ILoadedListener listener) {
+
         Drawable img = null;
         SoftReference<Drawable> obj = cache.get(url);
         if (obj != null)
@@ -35,6 +53,7 @@ public class AsyncImageLoader {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 Drawable image = (Drawable) msg.obj;
+                cache.put(url, new SoftReference<Drawable>(image));
                 listener.onImageLoaded(url, image);
             }
         };
@@ -44,7 +63,18 @@ public class AsyncImageLoader {
             InputStream i;
             @Override
             public void run() {
-                super.run();
+
+                if (!allowLoad)
+                    synchronized (lock) {
+                        try {
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        if (position > end || position < start)
+                            return;
+                    }
+
                 try {
                     imageUrl = new URL(url);
                 } catch (MalformedURLException e) {
