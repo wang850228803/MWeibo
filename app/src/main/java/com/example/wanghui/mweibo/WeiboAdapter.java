@@ -2,6 +2,7 @@ package com.example.wanghui.mweibo;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +43,7 @@ public class WeiboAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.item, null);
             holder = new MViewHolder();
@@ -63,7 +65,7 @@ public class WeiboAdapter extends BaseAdapter {
                 holder.icon.setTag(status.user.profile_image_url);
                 holder.icon.setImageDrawable(loader.loadImage(position, status.user.profile_image_url, new AsyncImageLoader.ILoadedListener() {
                     @Override
-                    public void onImageLoaded(String url, Drawable image) {
+                    public void onImageLoaded(int pos, String url, Drawable image) {
                         ImageView iv = (ImageView) lv.findViewWithTag(url);
                         if (iv != null)
                             iv.setImageDrawable(image);
@@ -77,6 +79,8 @@ public class WeiboAdapter extends BaseAdapter {
         if (status.pic_urls != null && status.pic_urls.size() != 0) {
             holder.gridView.setTag(position);
             holder.gridView.setAdapter(new WeiboImageAdapter(cxt, lv, position, status.pic_urls, loader));
+        } else {
+            holder.gridView.setAdapter(null);
         }
         holder.created_at.setText(status.created_at);
         holder.text.setText(status.text);
