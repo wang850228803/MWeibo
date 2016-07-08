@@ -39,6 +39,9 @@ public class MainActivity extends Activity {
     StatusList statuses;
     private WeiboAdapter mAdapter;
 
+    private long weiboCount = 0L;
+    private StatusesAPI mStatusesAPI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +56,7 @@ public class MainActivity extends Activity {
         if (AccessTokenKeeper.isTokenExist(this)) {
             btn.setVisibility(View.GONE);
             mAccessToken = AccessTokenKeeper.readAccessToken(this);
+            mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
             loadWeibo();
         } else {
             authorize();
@@ -72,10 +76,9 @@ public class MainActivity extends Activity {
         mSsoHandler.authorize(new AuthListener());
     }
 
-    private void loadWeibo() {
-        StatusesAPI mStatusesAPI = new StatusesAPI(this, Constants.APP_KEY, mAccessToken);
+    public void loadWeibo() {
         if (mAccessToken != null && mAccessToken.isSessionValid())
-            mStatusesAPI.friendsTimeline(0L, 0L, 100, 1, false, 0, false, mReListener);
+            mStatusesAPI.friendsTimeline(weiboCount, 0L, 100, 1, false, 0, false, mReListener);
     }
 
     @Override
@@ -105,6 +108,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this,
                         R.string.weibosdk_toast_auth_success, Toast.LENGTH_SHORT).show();
                 btn.setVisibility(View.GONE);
+                mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
                 loadWeibo();
             } else {
                 // 以下几种情况，您会收到 Code：
@@ -146,6 +150,7 @@ public class MainActivity extends Activity {
                                 "获取微博信息流成功, 条数: " + statuses.statusList.size(),
                                 Toast.LENGTH_LONG).show();
                     }
+                    weiboCount += 100;
                     mAdapter.addStatus(statuses.statusList);
                     mAdapter.notifyDataSetChanged();
                 } else if (response.startsWith("{\"created_at\"")) {
@@ -167,6 +172,5 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
         }
     };
-
 }
 

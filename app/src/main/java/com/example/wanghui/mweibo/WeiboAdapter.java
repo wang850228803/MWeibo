@@ -1,8 +1,6 @@
 package com.example.wanghui.mweibo;
 
-import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,29 +14,30 @@ import com.sina.weibo.sdk.openapi.models.Status;
 import com.wanghui.image.AsyncImageLoader;
 import com.wanghui.image.NoScrollGradView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by wanghui on 16-7-6.
  */
 public class WeiboAdapter extends BaseAdapter {
-    List<Status> statusList;
+    List<Status> statusList = new ArrayList<Status>();
     LayoutInflater inflater;
     MViewHolder holder;
     AsyncImageLoader loader;
     ListView lv;
-    Context cxt;
+    MainActivity mActivity;
 
-    public WeiboAdapter(Context cxt, ListView lv) {
-        inflater = LayoutInflater.from(cxt);
-        loader = new AsyncImageLoader();
+    public WeiboAdapter(MainActivity activity, ListView lv) {
         this.lv = lv;
-        this.cxt = cxt;
+        this.mActivity = activity;
+        inflater = LayoutInflater.from(activity);
+        loader = new AsyncImageLoader();
         lv.setOnScrollListener(mScrollListener);
     }
 
     public void addStatus(List<Status> list) {
-        this.statusList = list;
+        statusList.addAll(list);
     }
 
     @Override
@@ -77,8 +76,7 @@ public class WeiboAdapter extends BaseAdapter {
         }
 
         if (status.pic_urls != null && status.pic_urls.size() != 0) {
-            holder.gridView.setTag(position);
-            holder.gridView.setAdapter(new WeiboImageAdapter(cxt, lv, position, status.pic_urls, loader));
+            holder.gridView.setAdapter(new WeiboImageAdapter(mActivity, lv, position, status.pic_urls, loader));
         } else {
             holder.gridView.setAdapter(null);
         }
@@ -132,6 +130,9 @@ public class WeiboAdapter extends BaseAdapter {
                     break;
                 case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
                     loader.unlock(lv.getFirstVisiblePosition(), lv.getLastVisiblePosition());
+                    if (lv.getLastVisiblePosition() == getCount() - 1) {
+                        mActivity.loadWeibo();
+                    }
                     break;
                 default:
                     break;

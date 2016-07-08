@@ -41,7 +41,6 @@ public class AsyncImageLoader {
     }
 
     public Drawable loadImage(final int position, final String  url, final ILoadedListener listener) {
-        //Log.i("wh", "enter loadimage,position:" + position);
 
         Drawable img = null;
         SoftReference<Drawable> obj = cache.get(url);
@@ -50,7 +49,6 @@ public class AsyncImageLoader {
         if (img != null)
             return img;
 
-        //Log.i("wh", "enter2 loadimage,position:" + position);
 
         final Handler handler = new Handler() {
             @Override
@@ -62,7 +60,6 @@ public class AsyncImageLoader {
             }
         };
 
-        //Log.i("wh", "enter3 loadimage,position:" + position);
         new Thread() {
             URL imageUrl;
             InputStream i;
@@ -72,10 +69,7 @@ public class AsyncImageLoader {
                 if (!allowLoad)
                     synchronized (lock) {
                         try {
-                            //Log.i("wh", "position:" + position);
-                            //Log.i("wh", "before lock");
                             lock.wait();
-                            //Log.i("wh", "after lock");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -85,7 +79,7 @@ public class AsyncImageLoader {
 
                 }
 
-                //Log.i("wh", "enter4 loadimage,position:" + position);
+
                 try {
                     imageUrl = new URL(url);
                 } catch (MalformedURLException e) {

@@ -10,7 +10,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 
 import com.wanghui.image.AsyncImageLoader;
-import com.wanghui.image.NoScrollGradView;
 
 import java.util.ArrayList;
 
@@ -33,7 +32,6 @@ public class WeiboImageAdapter extends BaseAdapter {
         this.pos = position;
         this.lv = lv;
         mInflater = LayoutInflater.from(cxt);
-        mLoader = new AsyncImageLoader();
     }
 
     @Override
@@ -65,10 +63,7 @@ public class WeiboImageAdapter extends BaseAdapter {
         holder.imageView.setImageDrawable(mLoader.loadImage(pos, urls.get(position), new AsyncImageLoader.ILoadedListener() {
             @Override
             public void onImageLoaded(int listPos, String url, Drawable image) {
-                NoScrollGradView gv = (NoScrollGradView) lv.findViewWithTag(listPos);
-                //Log.i("wanghui", "lisp:" + listPos + "-------------------gv" + gv);
                 ImageView iv = (ImageView) lv.findViewWithTag(url);
-                //Log.i("wanghui", "-------------------iv" + iv);
                 if (iv != null)
                     iv.setImageDrawable(image);
             }
