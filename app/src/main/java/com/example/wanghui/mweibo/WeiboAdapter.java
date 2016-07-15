@@ -32,7 +32,7 @@ public class WeiboAdapter extends BaseAdapter {
         this.lv = lv;
         this.mActivity = activity;
         inflater = LayoutInflater.from(activity);
-        loader = new AsyncImageLoader();
+        loader = new AsyncImageLoader(activity);
         lv.setOnScrollListener(mScrollListener);
     }
 

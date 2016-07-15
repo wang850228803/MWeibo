@@ -1,9 +1,15 @@
 package com.wanghui.image;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
@@ -11,19 +17,31 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by wanghui on 16-7-6.
  */
 public class AsyncImageLoader {
+    //一级缓存
     Map<String, SoftReference<Drawable>> cache;
+    //二级缓存
+    FileCache fileCache;
+    //线程池
+    ExecutorService executorService;
+
     boolean allowLoad = true;
     Object lock = new Object();
     int start;
     int end;
 
-    public AsyncImageLoader() {
+    ILoadedListener listener;
+
+    public AsyncImageLoader(Context cxt) {
         cache = new HashMap<String, SoftReference<Drawable>>();
+        fileCache = new FileCache(cxt, Environment.getExternalStorageState(), "weibo_images");
+        executorService = Executors.newFixedThreadPool(9);
     }
 
     public void lock() {
@@ -40,46 +58,76 @@ public class AsyncImageLoader {
 
     }
 
-    public Drawable loadImage(final int position, final String  url, final ILoadedListener listener) {
+    public Drawable loadImage(int position, String  url, ILoadedListener listener) {
 
         Drawable img = null;
         SoftReference<Drawable> obj = cache.get(url);
         if (obj != null)
             img = obj.get();
-        if (img != null)
+        if (img != null) {
             return img;
 
+        }
 
-        final Handler handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                Drawable image = (Drawable) msg.obj;
-                cache.put(url, new SoftReference<Drawable>(image));
-                listener.onImageLoaded(position, url, image);
-            }
-        };
+        this.listener = listener;
+        executorService.execute(new LoadFromFileOrWeb(position, url));
+        return null;
+    }
 
-        new Thread() {
-            URL imageUrl;
-            InputStream i;
-            @Override
-            public void run() {
+    public interface ILoadedListener {
+        void onImageLoaded(int position, String url, Drawable image);
+    }
 
-                if (!allowLoad)
-                    synchronized (lock) {
-                        try {
-                            lock.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        if (position > end || position < start) {
-                            return;
-                        }
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Drawable image = (Drawable) msg.obj;
+            Bundle bundle = msg.getData();
+            int position = bundle.getInt("pos");
+            String url = bundle.getString("url");
+            listener.onImageLoaded(position, url, image);
+        }
+    };
+
+    private class LoadFromFileOrWeb implements Runnable{
+        private int position;
+        private String url;
+        URL imageUrl;
+        InputStream i;
+        Drawable draw;
+
+        public LoadFromFileOrWeb (int position, String  url) {
+            this.position = position;
+            this.url = url;
+        }
+
+        @Override
+        public void run() {
+            if (!allowLoad)
+                synchronized (lock) {
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (position > end || position < start) {
+                        return;
+                    }
 
                 }
 
+            File file = fileCache.getFileCacheImage(url);
+            try {
+                if (file.exists()) {
+                    InputStream is = new FileInputStream(file);
+                    draw = Drawable.createFromStream(is, "src");
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
 
+            if (draw == null) {
                 try {
                     imageUrl = new URL(url);
                 } catch (MalformedURLException e) {
@@ -90,14 +138,19 @@ public class AsyncImageLoader {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Drawable draw = Drawable.createFromStream(i, "src");
-                handler.obtainMessage(0, draw).sendToTarget();
+                draw = Drawable.createFromStream(i, "src");
+                cache.put(url, new SoftReference<Drawable>(draw));
+                fileCache.cacheImage(url, i);
             }
-        }.start();
-        return null;
+
+            Message mes = handler.obtainMessage(0, draw);
+            Bundle bundle = new Bundle();
+            bundle.putInt("pos", position);
+            bundle.putString("url", url);
+            mes.setData(bundle);
+            mes.sendToTarget();
+        }
+
     }
 
-    public interface ILoadedListener {
-        void onImageLoaded(int position, String url, Drawable image);
-    }
 }
