@@ -1,16 +1,15 @@
-/*
 package com.example.wanghui.mweibo;
 
 import android.graphics.drawable.Drawable;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 
+import com.lhh.ptrrv.library.PullToRefreshRecyclerView;
 import com.sina.weibo.sdk.openapi.models.Status;
 import com.wanghui.image.AsyncImageLoader;
 import com.wanghui.image.NoScrollGradView;
@@ -18,25 +17,20 @@ import com.wanghui.image.NoScrollGradView;
 import java.util.ArrayList;
 import java.util.List;
 
-*/
 /**
- * Created by wanghui on 16-7-6.
- *//*
-
-public class WeiboAdapter extends BaseAdapter {
-    List<Status> statusList = new ArrayList<Status>();
-    LayoutInflater inflater;
-    MViewHolder holder;
+ * Created by wanghui on 16-7-19.
+ */
+public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder> {
+    public List<Status> statusList = new ArrayList<Status>();
     AsyncImageLoader loader;
-    ListView lv;
+    PullToRefreshRecyclerView ptrrv;
     MainActivity mActivity;
 
-    public WeiboAdapter(MainActivity activity, ListView lv) {
-        this.lv = lv;
+    public PtrrvAdapter(MainActivity activity, PullToRefreshRecyclerView ptrrv) {
+        this.ptrrv = ptrrv;
         this.mActivity = activity;
-        inflater = LayoutInflater.from(activity);
         loader = new AsyncImageLoader(activity);
-        lv.setOnScrollListener(mScrollListener);
+        ptrrv.addOnScrollListener(mScrollListener);
     }
 
     public void addStatus(List<Status> list) {
@@ -44,23 +38,13 @@ public class WeiboAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public MViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        MViewHolder holder = new MViewHolder(LayoutInflater.from(mActivity).inflate(R.layout.item, null));
+        return holder;
+    }
 
-        if (convertView == null) {
-            convertView = inflater.inflate(R.layout.item, null);
-            holder = new MViewHolder();
-            holder.icon = (ImageView) convertView.findViewById(R.id.imageView);
-            holder.username = (TextView) convertView.findViewById(R.id.name);
-            holder.created_at = (TextView) convertView.findViewById(R.id.time);
-            holder.text = (TextView) convertView.findViewById(R.id.content);
-            holder.reposts_count = (TextView) convertView.findViewById(R.id.repost);
-            holder.comments_count = (TextView) convertView.findViewById(R.id.comment);
-            holder.gridView = (NoScrollGradView) convertView.findViewById(R.id.gridview);
-            convertView.setTag(holder);
-        } else {
-            holder = (MViewHolder) convertView.getTag();
-        }
-
+    @Override
+    public void onBindViewHolder(MViewHolder holder, int position) {
         Status status = statusList.get(position);
         if (status.user != null) {
             if (status.user.profile_image_url != null && !status.user.profile_image_url.equals("")) {
@@ -68,7 +52,7 @@ public class WeiboAdapter extends BaseAdapter {
                 holder.icon.setImageDrawable(loader.loadImage(position, status.user.profile_image_url, new AsyncImageLoader.ILoadedListener() {
                     @Override
                     public void onImageLoaded(int pos, String url, Drawable image) {
-                        ImageView iv = (ImageView) lv.findViewWithTag(url);
+                        ImageView iv = (ImageView) ptrrv.findViewWithTag(url);
                         if (iv != null)
                             iv.setImageDrawable(image);
                     }
@@ -79,7 +63,7 @@ public class WeiboAdapter extends BaseAdapter {
         }
 
         if (status.pic_urls != null && status.pic_urls.size() != 0) {
-            holder.gridView.setAdapter(new WeiboImageAdapter(mActivity, lv, position, status.pic_urls, loader));
+            holder.gridView.setAdapter(new WeiboImageAdapter(mActivity, ptrrv, position, status.pic_urls, loader));
         } else {
             holder.gridView.setAdapter(null);
         }
@@ -87,65 +71,52 @@ public class WeiboAdapter extends BaseAdapter {
         holder.text.setText(status.text);
         holder.reposts_count.setText("转发(" + status.reposts_count + ")");
         holder.comments_count.setText("评论(" + status.comments_count + ")");
-        return convertView;
     }
 
     @Override
-    public int getCount() {
+    public int getItemCount() {
         if (statusList != null)
             return statusList.size();
         else
             return 0;
     }
 
-    @Override
-    public Object getItem(int position) {
-        return null;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
-
-    public final class MViewHolder {
+    public class MViewHolder extends RecyclerView.ViewHolder{
         public ImageView icon;
-        */
-/** 微博作者的用户信息字段 *//*
-
+        /** 微博作者的用户信息字段 */
         public TextView username;
         public TextView created_at;
-        */
-/** 微博信息内容 *//*
-
+        /** 微博信息内容 */
         public TextView text;
-        */
-/** 转发数 *//*
-
+        /** 转发数 */
         public TextView reposts_count;
-        */
-/** 评论数 *//*
-
+        /** 评论数 */
         public TextView comments_count;
-        */
-/** 图片*//*
-
+        /** 图片*/
         public NoScrollGradView gridView;
+
+        public MViewHolder(View view) {
+            super(view);
+            icon = (ImageView) view.findViewById(R.id.imageView);
+            username = (TextView) view.findViewById(R.id.name);
+            created_at = (TextView) view.findViewById(R.id.time);
+            text = (TextView) view.findViewById(R.id.content);
+            reposts_count = (TextView) view.findViewById(R.id.repost);
+            comments_count = (TextView) view.findViewById(R.id.comment);
+            gridView = (NoScrollGradView) view.findViewById(R.id.gridview);
+        }
     }
 
-    AbsListView.OnScrollListener mScrollListener = new AbsListView.OnScrollListener() {
+    PullToRefreshRecyclerView.OnScrollListener mScrollListener = new PullToRefreshRecyclerView.OnScrollListener() {
         @Override
-        public void onScrollStateChanged(AbsListView view, int scrollState) {
-            switch (scrollState) {
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            switch (newState) {
                 case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
                 case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
                     loader.lock();
                     break;
                 case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                    loader.unlock(lv.getFirstVisiblePosition(), lv.getLastVisiblePosition());
-                    if (lv.getLastVisiblePosition() == getCount() - 1) {
-                        mActivity.loadWeibo();
-                    }
+                    loader.unlock(ptrrv.findFirstVisibleItemPosition(), ptrrv.findLastVisibleItemPosition());
                     break;
                 default:
                     break;
@@ -154,7 +125,12 @@ public class WeiboAdapter extends BaseAdapter {
         }
 
         @Override
-        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+
+        }
+
+        @Override
+        public void onScroll(RecyclerView recyclerView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 
         }
     };
@@ -163,4 +139,3 @@ public class WeiboAdapter extends BaseAdapter {
         loader.clear();
     }
 }
-*/

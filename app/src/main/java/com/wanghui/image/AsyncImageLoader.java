@@ -153,4 +153,8 @@ public class AsyncImageLoader {
 
     }
 
+    public void clear() {
+        fileCache.clear();
+        cache.clear();
+    }
 }

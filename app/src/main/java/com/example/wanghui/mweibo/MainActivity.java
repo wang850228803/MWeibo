@@ -3,12 +3,16 @@ package com.example.wanghui.mweibo;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.lhh.ptrrv.library.PullToRefreshRecyclerView;
 import com.sina.weibo.sdk.auth.AuthInfo;
 import com.sina.weibo.sdk.auth.Oauth2AccessToken;
 import com.sina.weibo.sdk.auth.WeiboAuthListener;
@@ -33,14 +37,18 @@ public class MainActivity extends Activity {
 
     private Button btn;
     private ListView lv;
+    private PullToRefreshRecyclerView mPtrrv;
 
     private String TAG = "MainActivity";
 
     StatusList statuses;
-    private WeiboAdapter mAdapter;
+    private PtrrvAdapter mAdapter;
 
-    private long weiboCount = 0L;
+    private long since_id = 0L;
+    private long max_id = 0L;
     private StatusesAPI mStatusesAPI;
+    private boolean loadNow = true;
+    private boolean refreshNow = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,15 +57,71 @@ public class MainActivity extends Activity {
         setContentView(R.layout.layout_main);
         btn = (Button)findViewById(R.id.login);
         btn.setOnClickListener(mListener);
-        lv = (ListView) findViewById(R.id.listview);
-        mAdapter = new WeiboAdapter(this, lv);
-        lv.setAdapter(mAdapter);
+        //lv = (ListView) findViewById(R.id.listview);
+        mPtrrv = (PullToRefreshRecyclerView) this.findViewById(R.id.ptrrv);
+        //改用ptrrv
+        //mAdapter = new WeiboAdapter(this, lv);
+        //lv.setAdapter(mAdapter);
+        // custom own load-more-view and add it into ptrrv
+        LoadMoreView loadMoreView = new LoadMoreView(this, mPtrrv.getRecyclerView());
+        loadMoreView.setLoadmoreString(getString(R.string.demo_loadmore));
+        loadMoreView.setLoadMorePadding(100);
+
+        mPtrrv.setLoadMoreFooter(loadMoreView);
+        //remove header
+        //mPtrrv.removeHeader();
+
+        // set true to open swipe(pull to refresh, default is true)
+        mPtrrv.setSwipeEnable(true);
+
+        // set the layoutManager which to use
+        mPtrrv.setLayoutManager(new LinearLayoutManager(this));
+
+        // set PagingableListener
+        mPtrrv.setPagingableListener(new PullToRefreshRecyclerView.PagingableListener() {
+            @Override
+            public void onLoadMoreItems() {
+                //do loadmore here
+                refreshNow = false;
+                loadNow = true;
+                loadWeibo(0, max_id);
+            }
+        });
+
+        // set OnRefreshListener
+        mPtrrv.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // do refresh here
+                refreshNow = true;
+                loadNow = false;
+                loadWeibo(since_id, 0);
+            }
+        });
+
+        // add item divider to recyclerView
+        mPtrrv.getRecyclerView().addItemDecoration(new DividerItemDecoration(this,
+                DividerItemDecoration.VERTICAL_LIST));
+
+        // add headerView
+        //mPtrrv.addHeaderView(View.inflate(this, R.layout.header, null));
+
+        //set EmptyVIEW
+        mPtrrv.setEmptyView(View.inflate(this,R.layout.empty_view, null));
+
+        // set loadmore enable, onFinishLoading(can load more? , select before item)
+        mPtrrv.onFinishLoading(true, false);
+        // Finally: Set the adapter which extends RecyclerView.Adpater
+
+        mAdapter = new PtrrvAdapter(this, mPtrrv);
+        mPtrrv.setAdapter(mAdapter);
 
         if (AccessTokenKeeper.isTokenExist(this)) {
             btn.setVisibility(View.GONE);
             mAccessToken = AccessTokenKeeper.readAccessToken(this);
+            Log.i("------------", mAccessToken + "");
             mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
-            loadWeibo();
+            loadWeibo(since_id, max_id);
         } else {
             authorize();
         }
@@ -76,9 +140,9 @@ public class MainActivity extends Activity {
         mSsoHandler.authorize(new AuthListener());
     }
 
-    public void loadWeibo() {
+    public void loadWeibo(long startId, long endId) {
         if (mAccessToken != null && mAccessToken.isSessionValid())
-            mStatusesAPI.friendsTimeline(weiboCount, 0L, 100, 1, false, 0, false, mReListener);
+            mStatusesAPI.friendsTimeline(startId, endId, 100, 1, false, 0, false, mReListener);
     }
 
     @Override
@@ -109,7 +173,7 @@ public class MainActivity extends Activity {
                         R.string.weibosdk_toast_auth_success, Toast.LENGTH_SHORT).show();
                 btn.setVisibility(View.GONE);
                 mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
-                loadWeibo();
+                loadWeibo(since_id, max_id);
             } else {
                 // 以下几种情况，您会收到 Code：
                 // 1. 当您未在平台上注册的应用程序的包名与签名时；
@@ -145,14 +209,24 @@ public class MainActivity extends Activity {
                 if (response.startsWith("{\"statuses\"")) {
                     // 调用 StatusList#parse 解析字符串成微博列表对象
                     statuses = StatusList.parse(response);
-                    if (statuses != null && statuses.total_number > 0) {
-                        Toast.makeText(MainActivity.this,
-                                "获取微博信息流成功, 条数: " + statuses.statusList.size(),
-                                Toast.LENGTH_LONG).show();
+                    if (statuses != null && statuses.statusList != null && statuses.statusList.size() > 0) {
+                        if (refreshNow) {
+                            since_id = Long.parseLong(statuses.statusList.get(0).id);
+
+                        }
+                        if (loadNow)
+                            max_id = Long.parseLong(statuses.statusList.get(statuses.statusList.size() - 1).id) - 1;
+                        if (!refreshNow)
+                            mAdapter.addStatus(statuses.statusList);
+                        else
+                            mAdapter.statusList.addAll(0, statuses.statusList);
+
+                        //mAdapter.setCount(DEFAULT_ITEM_SIZE + ITEM_SIZE_OFFSET);
+                        mAdapter.notifyDataSetChanged();
+                        mPtrrv.onFinishLoading(true, false);
                     }
-                    weiboCount += 100;
-                    mAdapter.addStatus(statuses.statusList);
-                    mAdapter.notifyDataSetChanged();
+                    if (refreshNow)
+                        mPtrrv.setOnRefreshComplete();
                 } else if (response.startsWith("{\"created_at\"")) {
                     /*// 调用 Status#parse 解析字符串成微博对象
                     Status status = Status.parse(response);
@@ -172,5 +246,12 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
         }
     };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i("this", "remove the cache");
+        mAdapter.clear();
+    }
 }
 

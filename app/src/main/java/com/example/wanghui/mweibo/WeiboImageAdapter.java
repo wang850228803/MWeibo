@@ -7,8 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 
+import com.lhh.ptrrv.library.PullToRefreshRecyclerView;
 import com.wanghui.image.AsyncImageLoader;
 
 import java.util.ArrayList;
@@ -23,9 +23,9 @@ public class WeiboImageAdapter extends BaseAdapter {
     AsyncImageLoader mLoader;
     ViewHolder holder;
     int pos;
-    ListView lv;
+    PullToRefreshRecyclerView lv;
 
-    public WeiboImageAdapter(Context cxt, ListView lv, int position, ArrayList<String> urls, AsyncImageLoader loader) {
+    public WeiboImageAdapter(Context cxt, PullToRefreshRecyclerView lv, int position, ArrayList<String> urls, AsyncImageLoader loader) {
         this.urls = urls;
         this.cxt = cxt;
         this.mLoader = loader;
@@ -60,6 +60,7 @@ public class WeiboImageAdapter extends BaseAdapter {
         holder = (ViewHolder) convertView.getTag();
         holder.imageView.setTag(urls.get(position));
         holder.imageView.setBackgroundColor(cxt.getResources().getColor(R.color.gradviewBack));
+        //holder.imageView.setImageDrawable(mLoader.loadImage(pos, urls.get(position).replace("/thumbnail/", "/bmiddle/"), new AsyncImageLoader.ILoadedListener() {
         holder.imageView.setImageDrawable(mLoader.loadImage(pos, urls.get(position), new AsyncImageLoader.ILoadedListener() {
             @Override
             public void onImageLoaded(int listPos, String url, Drawable image) {
