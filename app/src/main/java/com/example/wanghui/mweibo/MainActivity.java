@@ -57,11 +57,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.layout_main);
         btn = (Button)findViewById(R.id.login);
         btn.setOnClickListener(mListener);
-        //lv = (ListView) findViewById(R.id.listview);
         mPtrrv = (PullToRefreshRecyclerView) this.findViewById(R.id.ptrrv);
-        //改用ptrrv
-        //mAdapter = new WeiboAdapter(this, lv);
-        //lv.setAdapter(mAdapter);
         // custom own load-more-view and add it into ptrrv
         LoadMoreView loadMoreView = new LoadMoreView(this, mPtrrv.getRecyclerView());
         loadMoreView.setLoadmoreString(getString(R.string.demo_loadmore));
