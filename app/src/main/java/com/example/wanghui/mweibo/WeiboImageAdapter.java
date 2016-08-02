@@ -63,15 +63,13 @@ public class WeiboImageAdapter extends BaseAdapter {
         holder = (ViewHolder) convertView.getTag();
         holder.imageView.setTag(url);
         holder.imageView.setBackgroundColor(cxt.getResources().getColor(R.color.gradviewBack));
-        Log.i(TAG, "start to load:" + urls.get(position));
         holder.imageView.setImageDrawable(mLoader.loadImage(pos, url, new AsyncImageLoader.ILoadedListener() {
-        //holder.imageView.setImageDrawable(mLoader.loadImage(pos, urls.get(position), new AsyncImageLoader.ILoadedListener() {
             @Override
             public void onImageLoaded(int listPos, String url, Drawable image) {
                 ImageView iv = (ImageView) lv.findViewWithTag(url);
                 if (iv != null)
                     iv.setImageDrawable(image);
-                Log.i(TAG, "iv" + iv + "url:" + url);
+                Log.i(TAG, "iv:" + iv + "url:" + url);
             }
         }));
         return convertView;

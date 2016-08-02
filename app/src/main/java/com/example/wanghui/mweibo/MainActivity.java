@@ -137,8 +137,10 @@ public class MainActivity extends Activity {
     }
 
     public void loadWeibo(long startId, long endId) {
-        if (mAccessToken != null && mAccessToken.isSessionValid())
+        if (mAccessToken != null && mAccessToken.isSessionValid()) {
+            Log.i(TAG, "load weibo...startID="+startId+" endID:" + endId);
             mStatusesAPI.friendsTimeline(startId, endId, 100, 1, false, 0, false, mReListener);
+        }
     }
 
     @Override
@@ -201,28 +203,34 @@ public class MainActivity extends Activity {
         @Override
         public void onComplete(String response) {
             if (!TextUtils.isEmpty(response)) {
-                LogUtil.i(TAG, response);
+                Log.i(TAG, response);
                 if (response.startsWith("{\"statuses\"")) {
                     // 调用 StatusList#parse 解析字符串成微博列表对象
                     statuses = StatusList.parse(response);
                     if (statuses != null && statuses.statusList != null && statuses.statusList.size() > 0) {
                         if (refreshNow) {
                             since_id = Long.parseLong(statuses.statusList.get(0).id);
-
                         }
                         if (loadNow)
-                            max_id = Long.parseLong(statuses.statusList.get(statuses.statusList.size() - 1).id) - 1;
-                        if (!refreshNow)
+                            max_id = Long.parseLong(statuses.statusList.get(statuses.statusList.size() - 1).id);
+                        if (!refreshNow) {
+                            mAdapter.statusList.remove(mAdapter.statusList.size() - 1);
                             mAdapter.addStatus(statuses.statusList);
-                        else
+                        }
+                        else {
                             mAdapter.statusList.addAll(0, statuses.statusList);
+
+                        }
 
                         //mAdapter.setCount(DEFAULT_ITEM_SIZE + ITEM_SIZE_OFFSET);
                         mAdapter.notifyDataSetChanged();
                         mPtrrv.onFinishLoading(true, false);
-                    }
-                    if (refreshNow)
+                    } else {
+                        //Once the statuses.statusList.size() = 0, it will always be 0.
+                        mPtrrv.setOnLoadMoreComplete();
                         mPtrrv.setOnRefreshComplete();
+                    }
+
                 } else if (response.startsWith("{\"created_at\"")) {
                     /*// 调用 Status#parse 解析字符串成微博对象
                     Status status = Status.parse(response);
@@ -237,6 +245,8 @@ public class MainActivity extends Activity {
 
         @Override
         public void onWeiboException(WeiboException e) {
+            mPtrrv.onFinishLoading(true, true);
+            mPtrrv.setOnRefreshComplete();
             LogUtil.e(TAG, e.getMessage());
             ErrorInfo info = ErrorInfo.parse(e.getMessage());
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
@@ -246,7 +256,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.i("this", "remove the cache");
+        Log.i(this + "", "remove the cache");
         mAdapter.clear();
     }
 }

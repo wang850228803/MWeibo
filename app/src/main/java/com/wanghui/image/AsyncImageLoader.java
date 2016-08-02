@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,8 +34,8 @@ public class AsyncImageLoader {
 
     boolean allowLoad = true;
     Object lock = new Object();
-    int start;
-    int end;
+    int start = 0;
+    int end = 10;
 
     ILoadedListener listener;
 
@@ -117,6 +118,11 @@ public class AsyncImageLoader {
 
                 }
 
+            //Because the thread in thread pool is 9, so if the thread num is large than 9, the thread will not be blocked.
+            if (position > end || position < start) {
+                return;
+            }
+
             File file = fileCache.getFileCacheImage(url);
             try {
                 if (file.exists()) {
@@ -128,6 +134,7 @@ public class AsyncImageLoader {
             }
 
             if (draw == null) {
+                Log.i("AsyncImageLoader", "start to load from url:"+url+"start:" + start+"end:"+end+"position:"+position);
                 try {
                     imageUrl = new URL(url);
                 } catch (MalformedURLException e) {
@@ -144,6 +151,7 @@ public class AsyncImageLoader {
             }
 
             Message mes = handler.obtainMessage(0, draw);
+            draw = null;
             Bundle bundle = new Bundle();
             bundle.putInt("pos", position);
             bundle.putString("url", url);
