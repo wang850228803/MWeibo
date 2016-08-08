@@ -22,14 +22,16 @@ import java.util.List;
  */
 public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder> {
     public List<Status> statusList = new ArrayList<Status>();
-    AsyncImageLoader loader;
-    PullToRefreshRecyclerView ptrrv;
+    AsyncImageLoader mLoader;
+    PullToRefreshRecyclerView mPtrrv;
     MainActivity mActivity;
+    ImageView mIV;
 
-    public PtrrvAdapter(MainActivity activity, PullToRefreshRecyclerView ptrrv) {
-        this.ptrrv = ptrrv;
+    public PtrrvAdapter(MainActivity activity, PullToRefreshRecyclerView ptrrv, ImageView iv) {
+        this.mPtrrv = ptrrv;
         this.mActivity = activity;
-        loader = new AsyncImageLoader(activity);
+        this.mIV = iv;
+        mLoader = new AsyncImageLoader(activity);
         ptrrv.addOnScrollListener(mScrollListener);
     }
 
@@ -49,10 +51,10 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
         if (status.user != null) {
             if (status.user.profile_image_url != null && !status.user.profile_image_url.equals("")) {
                 holder.icon.setTag(status.user.profile_image_url);
-                holder.icon.setImageDrawable(loader.loadImage(position, status.user.profile_image_url, new AsyncImageLoader.ILoadedListener() {
+                holder.icon.setImageDrawable(mLoader.loadImage(position, status.user.profile_image_url, new AsyncImageLoader.ILoadedListener() {
                     @Override
                     public void onImageLoaded(int pos, String url, Drawable image) {
-                        ImageView iv = (ImageView) ptrrv.findViewWithTag(url);
+                        ImageView iv = (ImageView) mPtrrv.findViewWithTag(url);
                         if (iv != null)
                             iv.setImageDrawable(image);
                     }
@@ -63,7 +65,7 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
         }
 
         if (status.pic_urls != null && status.pic_urls.size() != 0) {
-            holder.gridView.setAdapter(new WeiboImageAdapter(mActivity, ptrrv, position, status.pic_urls, loader));
+            holder.gridView.setAdapter(new WeiboImageAdapter(mActivity, mPtrrv, position, status.pic_urls, mLoader));
         } else {
             holder.gridView.setAdapter(null);
         }
@@ -107,21 +109,36 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
         }
     }
 
+    private boolean mScrollFlag = false;
+    private int lastVisibleItemPosition = 0;
+
     PullToRefreshRecyclerView.OnScrollListener mScrollListener = new PullToRefreshRecyclerView.OnScrollListener() {
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             switch (newState) {
                 case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
+                    mLoader.lock();
+                    mScrollFlag = false;
+                    break;
                 case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-                    loader.lock();
+                    mLoader.lock();
+                    mScrollFlag = true;
                     break;
                 case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                    loader.unlock(ptrrv.findFirstVisibleItemPosition(), ptrrv.findLastVisibleItemPosition());
+                    mLoader.unlock(mPtrrv.findFirstVisibleItemPosition(), mPtrrv.findLastVisibleItemPosition());
+                    mScrollFlag = false;
+                    if (mPtrrv.findLastVisibleItemPosition() == (statusList.size() - 1)) {
+                        mIV.setVisibility(View.VISIBLE);
+                    }
+                    if (mPtrrv.findFirstVisibleItemPosition() == 0) {
+                        mIV.setVisibility(View.GONE);
+                    }
                     break;
                 default:
                     break;
 
             }
+
         }
 
         @Override
@@ -131,11 +148,19 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
 
         @Override
         public void onScroll(RecyclerView recyclerView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
+            if (mScrollFlag) {
+                if (firstVisibleItem > lastVisibleItemPosition)
+                    mIV.setVisibility(View.GONE);
+                else if (firstVisibleItem < lastVisibleItemPosition)
+                    mIV.setVisibility(View.VISIBLE);
+                else
+                    return;
+                lastVisibleItemPosition = firstVisibleItem;
+            }
         }
     };
 
     public void clear() {
-        loader.clear();
+        mLoader.clear();
     }
 }

@@ -96,7 +96,7 @@ public class AsyncImageLoader {
         private String url;
         URL imageUrl;
         InputStream i;
-        Drawable draw;
+        Drawable draw = null;
 
         public LoadFromFileOrWeb (int position, String  url) {
             this.position = position;
@@ -151,7 +151,6 @@ public class AsyncImageLoader {
             }
 
             Message mes = handler.obtainMessage(0, draw);
-            draw = null;
             Bundle bundle = new Bundle();
             bundle.putInt("pos", position);
             bundle.putString("url", url);

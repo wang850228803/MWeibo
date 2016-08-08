@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -22,7 +23,6 @@ import com.sina.weibo.sdk.net.RequestListener;
 import com.sina.weibo.sdk.openapi.StatusesAPI;
 import com.sina.weibo.sdk.openapi.models.ErrorInfo;
 import com.sina.weibo.sdk.openapi.models.StatusList;
-import com.sina.weibo.sdk.utils.LogUtil;
 import com.wanghui.weibo.util.AccessTokenKeeper;
 import com.wanghui.weibo.util.Constants;
 
@@ -35,7 +35,8 @@ public class MainActivity extends Activity {
     /** 封装了 "access_token"，"expires_in"，"refresh_token"，并提供了他们的管理功能  */
     private Oauth2AccessToken mAccessToken;
 
-    private Button btn;
+    private Button mBtn;
+    private ImageView mToTop;
     private ListView lv;
     private PullToRefreshRecyclerView mPtrrv;
 
@@ -55,8 +56,10 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.layout_main);
-        btn = (Button)findViewById(R.id.login);
-        btn.setOnClickListener(mListener);
+        mBtn = (Button)findViewById(R.id.login);
+        mBtn.setOnClickListener(mListener);
+        mToTop = (ImageView) findViewById(R.id.toTop);
+        mToTop.setOnClickListener(mListener);
         mPtrrv = (PullToRefreshRecyclerView) this.findViewById(R.id.ptrrv);
         // custom own load-more-view and add it into ptrrv
         LoadMoreView loadMoreView = new LoadMoreView(this, mPtrrv.getRecyclerView());
@@ -109,11 +112,11 @@ public class MainActivity extends Activity {
         mPtrrv.onFinishLoading(true, false);
         // Finally: Set the adapter which extends RecyclerView.Adpater
 
-        mAdapter = new PtrrvAdapter(this, mPtrrv);
+        mAdapter = new PtrrvAdapter(this, mPtrrv, mToTop);
         mPtrrv.setAdapter(mAdapter);
 
         if (AccessTokenKeeper.isTokenExist(this)) {
-            btn.setVisibility(View.GONE);
+            mBtn.setVisibility(View.GONE);
             mAccessToken = AccessTokenKeeper.readAccessToken(this);
             Log.i("------------", mAccessToken + "");
             mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
@@ -126,7 +129,20 @@ public class MainActivity extends Activity {
     private View.OnClickListener mListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            authorize();
+            switch (v.getId()) {
+                case R.id.login:
+                    authorize();
+                    break;
+                case R.id.toTop:
+                    mPtrrv.smoothScrollToPosition(0);
+                    mPtrrv.setRefreshing(true);
+                    refreshNow = true;
+                    loadNow = false;
+                    loadWeibo(since_id, 0);
+                    break;
+                default:
+                    break;
+            }
         }
     };
 
@@ -169,7 +185,7 @@ public class MainActivity extends Activity {
                 AccessTokenKeeper.writeAccessToken(MainActivity.this, mAccessToken);
                 Toast.makeText(MainActivity.this,
                         R.string.weibosdk_toast_auth_success, Toast.LENGTH_SHORT).show();
-                btn.setVisibility(View.GONE);
+                mBtn.setVisibility(View.GONE);
                 mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
                 loadWeibo(since_id, max_id);
             } else {
@@ -219,7 +235,7 @@ public class MainActivity extends Activity {
                         }
                         else {
                             mAdapter.statusList.addAll(0, statuses.statusList);
-
+                            mPtrrv.setOnRefreshComplete();
                         }
 
                         //mAdapter.setCount(DEFAULT_ITEM_SIZE + ITEM_SIZE_OFFSET);
@@ -247,7 +263,7 @@ public class MainActivity extends Activity {
         public void onWeiboException(WeiboException e) {
             mPtrrv.onFinishLoading(true, true);
             mPtrrv.setOnRefreshComplete();
-            LogUtil.e(TAG, e.getMessage());
+            Log.e(TAG, e.getMessage());
             ErrorInfo info = ErrorInfo.parse(e.getMessage());
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
         }
