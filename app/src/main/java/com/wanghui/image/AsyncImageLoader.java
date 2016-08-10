@@ -1,6 +1,8 @@
 package com.wanghui.image;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
@@ -128,8 +130,11 @@ public class AsyncImageLoader {
                 if (file.exists()) {
                     InputStream is = new FileInputStream(file);
                     draw = Drawable.createFromStream(is, "src");
+                    is.close();
                 }
             } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
@@ -146,8 +151,24 @@ public class AsyncImageLoader {
                     e.printStackTrace();
                 }
                 draw = Drawable.createFromStream(i, "src");
+
+                //resolve the exception: Bitmap too large to be uploaded into a texture exception
+                int w = draw.getIntrinsicWidth();
+                int h = draw.getIntrinsicHeight();
+                if (h > 2 * w) {
+                    Bitmap bm = ((BitmapDrawable)draw).getBitmap();
+                    Bitmap bms = Bitmap.createBitmap(bm, 0, (h - w) / 2, w, w, null, false);
+                    draw = new BitmapDrawable(bms);
+                    bm.recycle();
+                }
+
                 cache.put(url, new SoftReference<Drawable>(draw));
                 fileCache.cacheImage(url, i);
+                try {
+                    i.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             Message mes = handler.obtainMessage(0, draw);

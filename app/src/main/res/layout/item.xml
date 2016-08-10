@@ -2,15 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="5dp"
-    android:paddingBottom="5dp"
-    android:paddingLeft="@dimen/main_maren_left"
-    android:paddingRight="@dimen/main_maren_right">
+    android:paddingTop="5dp" >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/title_height"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/main_maren_left"
+        android:paddingRight="@dimen/main_maren_right">
+
         <ImageView
             android:layout_width="@dimen/title_height"
             android:layout_height="@dimen/title_height"
@@ -43,7 +43,20 @@
         android:layout_height="wrap_content"
         android:textSize="15dp"
         android:lineSpacingExtra="3dp"
-        android:paddingTop="@dimen/margen_commen"/>
+        android:paddingTop="@dimen/margen_commen"
+        android:paddingLeft="@dimen/main_maren_left"
+        android:paddingRight="@dimen/main_maren_right"/>
+
+    <TextView
+        android:id = "@+id/sub_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15dp"
+        android:background="@color/lightGray"
+        android:lineSpacingExtra="3dp"
+        android:visibility="gone"
+        android:paddingLeft="@dimen/main_maren_left"
+        android:paddingRight="@dimen/main_maren_right"/>
 
     <com.wanghui.image.NoScrollGradView
         android:id = "@+id/gridview"
@@ -54,15 +67,20 @@
         android:numColumns="auto_fit"
         android:stretchMode="columnWidth"
         android:horizontalSpacing="@dimen/margen_commen"
-        android:verticalSpacing="@dimen/margen_commen">
+        android:verticalSpacing="@dimen/margen_commen"
+        android:paddingLeft="@dimen/main_maren_left"
+        android:paddingRight="@dimen/main_maren_right">
 
     </com.wanghui.image.NoScrollGradView>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_height"
+        android:layout_height="wrap_content"
         android:paddingTop="@dimen/margen_commen"
-        android:orientation="horizontal">
+        android:paddingBottom="5dp"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/main_maren_left"
+        android:paddingRight="@dimen/main_maren_right">
         <TextView
             android:id = "@+id/repost"
             android:layout_width="wrap_content"
@@ -73,5 +91,10 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="@dimen/margen_left"/>
     </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:background="@color/lightGray"/>
 
 </LinearLayout>

@@ -46,13 +46,20 @@ public class FileCache {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        for(;;) {
+        if (os != null) {
+            for(;;) {
+                try {
+                    int count = is.read(bytes, 0, 1024);
+                    if (count == -1)
+                        break;
+                    else
+                        os.write(bytes, 0, count);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             try {
-                int count = is.read(bytes, 0, 1024);
-                if (count == -1)
-                    break;
-                else
-                    os.write(bytes, 0, count);
+                os.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

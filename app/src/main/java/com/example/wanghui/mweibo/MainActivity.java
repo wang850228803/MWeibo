@@ -134,7 +134,8 @@ public class MainActivity extends Activity {
                     authorize();
                     break;
                 case R.id.toTop:
-                    mPtrrv.smoothScrollToPosition(0);
+                    mPtrrv.scrollToPosition(0);
+                    mAdapter.reset();
                     mPtrrv.setRefreshing(true);
                     refreshNow = true;
                     loadNow = false;
