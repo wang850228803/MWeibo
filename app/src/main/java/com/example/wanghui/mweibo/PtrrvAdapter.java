@@ -8,6 +8,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,7 +98,7 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
             holder.gridView.setBackgroundColor(mActivity.getResources().getColor(R.color.lightGray));
         } else {
             holder.subText.setVisibility(View.GONE);
-            holder.gridView.setBackgroundColor(mActivity.getResources().getColor(R.color.white));
+            holder.gridView.setBackgroundColor(0);
         }
 
         if (retStatus == null) {

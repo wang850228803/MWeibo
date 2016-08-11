@@ -29,6 +29,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".TouchGallery"></activity>
+
+        <activity android:name="com.sina.weibo.sdk.component.WeiboSdkBrowser"></activity>
     </application>
 
 </manifest>
