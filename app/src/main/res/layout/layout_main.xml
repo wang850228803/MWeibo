@@ -4,13 +4,6 @@
     android:layout_height="match_parent"
     android:id = "@+id/layout">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="login"
-        android:id="@+id/login"
-        android:layout_gravity="center_horizontal" />
-
     <com.lhh.ptrrv.library.PullToRefreshRecyclerView
         android:id="@+id/ptrrv"
         android:layout_width="match_parent"

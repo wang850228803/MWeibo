@@ -8,7 +8,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -35,7 +34,6 @@ public class MainActivity extends Activity {
     /** 封装了 "access_token"，"expires_in"，"refresh_token"，并提供了他们的管理功能  */
     private Oauth2AccessToken mAccessToken;
 
-    private Button mBtn;
     private ImageView mToTop;
     private ListView lv;
     private PullToRefreshRecyclerView mPtrrv;
@@ -56,8 +54,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.layout_main);
-        mBtn = (Button)findViewById(R.id.login);
-        mBtn.setOnClickListener(mListener);
         mToTop = (ImageView) findViewById(R.id.toTop);
         mToTop.setOnClickListener(mListener);
         mPtrrv = (PullToRefreshRecyclerView) this.findViewById(R.id.ptrrv);
@@ -115,8 +111,7 @@ public class MainActivity extends Activity {
         mAdapter = new PtrrvAdapter(this, mPtrrv, mToTop);
         mPtrrv.setAdapter(mAdapter);
 
-        if (AccessTokenKeeper.isTokenExist(this)) {
-            mBtn.setVisibility(View.GONE);
+        if (AccessTokenKeeper.isTokenValid(this)) {
             mAccessToken = AccessTokenKeeper.readAccessToken(this);
             Log.i("------------", mAccessToken + "");
             mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
@@ -130,9 +125,6 @@ public class MainActivity extends Activity {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.login:
-                    authorize();
-                    break;
                 case R.id.toTop:
                     mPtrrv.scrollToPosition(0);
                     mAdapter.reset();
@@ -186,7 +178,6 @@ public class MainActivity extends Activity {
                 AccessTokenKeeper.writeAccessToken(MainActivity.this, mAccessToken);
                 Toast.makeText(MainActivity.this,
                         R.string.weibosdk_toast_auth_success, Toast.LENGTH_SHORT).show();
-                mBtn.setVisibility(View.GONE);
                 mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
                 loadWeibo(since_id, max_id);
             } else {
@@ -207,6 +198,7 @@ public class MainActivity extends Activity {
         public void onCancel() {
             Toast.makeText(MainActivity.this,
                     R.string.weibosdk_toast_auth_canceled, Toast.LENGTH_LONG).show();
+            MainActivity.this.finish();
         }
 
         @Override

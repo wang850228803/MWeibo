@@ -35,6 +35,7 @@ public class AccessTokenKeeper {
     private static final String KEY_ACCESS_TOKEN  = "access_token";
     private static final String KEY_EXPIRES_IN    = "expires_in";
     private static final String KEY_REFRESH_TOKEN    = "refresh_token";
+    private static final String KEY_SAVE_TIME ="save_time";
     
     /**
      * 保存 Token 对象到 SharedPreferences。
@@ -53,7 +54,9 @@ public class AccessTokenKeeper {
         editor.putString(KEY_ACCESS_TOKEN, token.getToken());
         editor.putString(KEY_REFRESH_TOKEN, token.getRefreshToken());
         editor.putLong(KEY_EXPIRES_IN, token.getExpiresTime());
+        editor.putLong(KEY_SAVE_TIME, System.currentTimeMillis());
         editor.commit();
+
     }
 
     /**
@@ -97,5 +100,20 @@ public class AccessTokenKeeper {
     public static boolean isTokenExist(Context context) {
         SharedPreferences pref = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_APPEND);
         return !pref.getString(KEY_UID, "").equals("");
+    }
+
+    //check whether the token is null and expire
+    public static boolean isTokenValid(Context context) {
+        SharedPreferences pref = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_APPEND);
+        if (pref.getString(KEY_UID, "").equals("")) {
+            return false;
+        } else if (System.currentTimeMillis() - pref.getLong(KEY_SAVE_TIME, 0) > pref.getLong(KEY_EXPIRES_IN, 0)) {
+                Editor editor = pref.edit();
+                editor.clear();
+                editor.commit();
+                return false;
+        } else {
+            return true;
+        }
     }
 }
