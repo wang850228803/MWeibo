@@ -41,10 +41,13 @@ public class AsyncImageLoader {
 
     ILoadedListener listener;
 
+    String TAG = "AsyncImageLoader";
+
     public AsyncImageLoader(Context cxt) {
         cache = new HashMap<String, SoftReference<Drawable>>();
         fileCache = new FileCache(cxt, Environment.getExternalStorageState(), "weibo_images");
-        executorService = Executors.newFixedThreadPool(9);
+        //reduce the thread pool number to avoid OOM.
+        executorService = Executors.newFixedThreadPool(4);
     }
 
     public void lock() {
@@ -107,7 +110,7 @@ public class AsyncImageLoader {
 
         @Override
         public void run() {
-            if (!allowLoad)
+            if (!allowLoad) {
                 synchronized (lock) {
                     try {
                         lock.wait();
@@ -119,6 +122,7 @@ public class AsyncImageLoader {
                     }
 
                 }
+            }
 
             //Because the thread in thread pool is 9, so if the thread num is large than 9, the thread will not be blocked.
             if (position > end || position < start) {
@@ -139,7 +143,7 @@ public class AsyncImageLoader {
             }
 
             if (draw == null) {
-                Log.i("AsyncImageLoader", "start to load from url:"+url+"start:" + start+"end:"+end+"position:"+position);
+                Log.i(TAG, "start to load from url:"+url+"start:" + start+"end:"+end+"position:"+position);
                 try {
                     imageUrl = new URL(url);
                 } catch (MalformedURLException e) {

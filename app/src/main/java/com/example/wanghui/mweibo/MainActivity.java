@@ -236,8 +236,10 @@ public class MainActivity extends Activity {
                         mPtrrv.onFinishLoading(true, false);
                     } else {
                         //Once the statuses.statusList.size() = 0, it will always be 0.
-                        mPtrrv.setOnLoadMoreComplete();
-                        mPtrrv.setOnRefreshComplete();
+                        if (loadNow)
+                            mPtrrv.setOnLoadMoreComplete();
+                        if (refreshNow)
+                            mPtrrv.setOnRefreshComplete();
                     }
 
                 } else if (response.startsWith("{\"created_at\"")) {

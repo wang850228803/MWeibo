@@ -8,7 +8,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -209,9 +208,6 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
                 case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
                     mLoader.unlock(mPtrrv.findFirstVisibleItemPosition(), mPtrrv.findLastVisibleItemPosition());
                     mScrollFlag = false;
-                    if (mPtrrv.findLastVisibleItemPosition() == (statusList.size() - 1)) {
-                        mIV.setVisibility(View.VISIBLE);
-                    }
                     if (mPtrrv.findFirstVisibleItemPosition() == 0) {
                         mIV.setVisibility(View.GONE);
                     }
@@ -248,5 +244,7 @@ public class PtrrvAdapter extends RecyclerView.Adapter<PtrrvAdapter.MViewHolder>
 
     public void reset() {
         lastVisibleItemPosition = 0;
+        mIV.setVisibility(View.GONE);
+        mLoader.unlock(0, 10);
     }
 }
