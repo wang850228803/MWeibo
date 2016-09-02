@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/white">
+
+    <ImageView
+        android:id="@+id/settings"
+        android:src="@drawable/settings"
+        android:layout_marginLeft="20dp"
+        android:layout_width="150dp"
+        android:layout_height="100dp" />
+
+    <ImageView
+        android:id="@+id/add"
+        android:src="@drawable/add"
+        android:layout_marginRight="20dp"
+        android:layout_width="150dp"
+        android:layout_height="100dp" />
+
+</LinearLayout>

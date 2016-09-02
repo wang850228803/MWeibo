@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import com.lhh.ptrrv.library.PullToRefreshRecyclerView;
@@ -48,6 +52,11 @@ public class MainActivity extends Activity {
     private StatusesAPI mStatusesAPI;
     private boolean loadNow = true;
     private boolean refreshNow = true;
+
+    private PopupWindow mPw;
+    private ImageView mSettingsMenu;
+    private ImageView mAddMenu;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +128,7 @@ public class MainActivity extends Activity {
         } else {
             authorize();
         }
+        prepareMenu();
     }
 
     private View.OnClickListener mListener = new View.OnClickListener() {
@@ -265,10 +275,93 @@ public class MainActivity extends Activity {
     };
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        menuState = 0;
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(this + "", "remove the cache");
         mAdapter.clear();
     }
+
+    private int menuState = 0;
+
+    private void prepareMenu() {
+        View view = getLayoutInflater().inflate(R.layout.layout_menu, null);
+        mPw = new PopupWindow(view, LinearLayoutCompat.LayoutParams.MATCH_PARENT, LinearLayoutCompat.LayoutParams.WRAP_CONTENT);
+        mSettingsMenu = (ImageView) view.findViewById(R.id.settings);
+        mSettingsMenu.setOnClickListener(mMenuListener);
+        mAddMenu = (ImageView) view.findViewById(R.id.add);
+        mAddMenu.setOnClickListener(mMenuListener);
+    }
+
+    View.OnClickListener mMenuListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.add:
+                    //startActivityForResult(new Intent());
+                    break;
+                case R.id.settings:
+                    startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                    mPw.dismiss();
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            if (menuState == 0) {
+                mPw.showAtLocation(findViewById(R.id.content), Gravity.CENTER, 0, this.getWindowManager().getDefaultDisplay().getHeight() - 100);
+                menuState = 1;
+            } else {
+                mPw.dismiss();
+                menuState = 0;
+            }
+            return true;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_BACK && menuState == 1) {
+            mPw.dismiss();
+            menuState = 0;
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+/*    //This leads to misbehavior.
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        //menu.add(0, Menu.FIRST, 0, "test");//This should be added, otherwise the first menu close will be failed.
+        View view = getLayoutInflater().inflate(R.layout.layout_menu, null);
+        mPw = new PopupWindow(view, LinearLayoutCompat.LayoutParams.MATCH_PARENT, LinearLayoutCompat.LayoutParams.WRAP_CONTENT);
+        mSettingsMenu = (ImageView) view.findViewById(R.id.settings);
+        mSettingsMenu.setOnClickListener(mMenuListener);
+        mAddMenu = (ImageView) view.findViewById(R.id.add);
+        mAddMenu.setOnClickListener(mMenuListener);
+        //return super.onCreateOptionsMenu(menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        mPw.showAtLocation(findViewById(R.id.content), Gravity.CENTER, 0, this.getWindowManager().getDefaultDisplay().getHeight() - 100);
+        //return super.onPrepareOptionsMenu(menu);
+        return true;
+    }
+
+    @Override
+    public void onOptionsMenuClosed(Menu menu) {
+        mPw.dismiss();
+        //super.onOptionsMenuClosed(menu);
+    }*/
+
 }
 

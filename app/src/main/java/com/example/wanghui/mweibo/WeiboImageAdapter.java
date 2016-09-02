@@ -29,6 +29,8 @@ public class WeiboImageAdapter extends BaseAdapter {
     PullToRefreshRecyclerView lv;
     String TAG = "WeiboImageAdapter";
     ArrayList<String> mLargeUrls = new ArrayList<String>();
+    private static final String PREFERENCES_NAME = "com_weibo_sdk_android";
+    public boolean isThumb;
 
     public WeiboImageAdapter(Context cxt, PullToRefreshRecyclerView lv, int position, ArrayList<String> urls, AsyncImageLoader loader) {
         this.mUrls = urls;
@@ -69,7 +71,11 @@ public class WeiboImageAdapter extends BaseAdapter {
             mHolder.imageView = (ImageView) convertView.findViewById(R.id.itemimage);
             convertView.setTag(mHolder);
         }
-        String url = mUrls.get(position).replace("/thumbnail/", "/bmiddle/");
+        String url = mUrls.get(position);
+        isThumb = mCxt.getSharedPreferences(PREFERENCES_NAME, Context.MODE_APPEND).getBoolean("thumb", false);
+        Log.i(TAG, "isThumb:" + isThumb);
+        if (!isThumb)
+            url = url.replace("/thumbnail/", "/bmiddle/");
         mHolder = (ViewHolder) convertView.getTag();
         mHolder.imageView.setTag(url);
         mHolder.imageView.setBackgroundColor(mCxt.getResources().getColor(R.color.gradviewBack));
@@ -85,10 +91,12 @@ public class WeiboImageAdapter extends BaseAdapter {
         mHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(mCxt, TouchGallery.class);
-                intent.putStringArrayListExtra("lUrls", mLargeUrls);
-                intent.putExtra("pos", position);
-                mCxt.startActivity(intent);
+                if (!WeiboImageAdapter.this.isThumb) {
+                    Intent intent = new Intent(mCxt, TouchGallery.class);
+                    intent.putStringArrayListExtra("lUrls", mLargeUrls);
+                    intent.putExtra("pos", position);
+                    mCxt.startActivity(intent);
+                }
             }
         });
         return convertView;

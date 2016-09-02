@@ -47,7 +47,7 @@ public class AsyncImageLoader {
         cache = new HashMap<String, SoftReference<Drawable>>();
         fileCache = new FileCache(cxt, Environment.getExternalStorageState(), "weibo_images");
         //reduce the thread pool number to avoid OOM.
-        executorService = Executors.newFixedThreadPool(4);
+        executorService = Executors.newFixedThreadPool(3);
     }
 
     public void lock() {
