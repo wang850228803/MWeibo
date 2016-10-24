@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wanghui.weibo.util;
+package com.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;

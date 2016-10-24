@@ -78,7 +78,7 @@ public class WeiboImageAdapter extends BaseAdapter {
             url = url.replace("/thumbnail/", "/bmiddle/");
         mHolder = (ViewHolder) convertView.getTag();
         mHolder.imageView.setTag(url);
-        mHolder.imageView.setBackgroundColor(mCxt.getResources().getColor(R.color.gradviewBack));
+        mHolder.imageView.setBackgroundColor(mCxt.getResources().getColor(R.color.darkGray));
         mHolder.imageView.setImageDrawable(mLoader.loadImage(pos, url, new AsyncImageLoader.ILoadedListener() {
             @Override
             public void onImageLoaded(int listPos, String url, Drawable image) {

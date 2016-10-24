@@ -2,6 +2,8 @@ package com.example.wanghui.mweibo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -12,7 +14,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
@@ -25,9 +26,12 @@ import com.sina.weibo.sdk.exception.WeiboException;
 import com.sina.weibo.sdk.net.RequestListener;
 import com.sina.weibo.sdk.openapi.StatusesAPI;
 import com.sina.weibo.sdk.openapi.models.ErrorInfo;
+import com.sina.weibo.sdk.openapi.models.Status;
 import com.sina.weibo.sdk.openapi.models.StatusList;
-import com.wanghui.weibo.util.AccessTokenKeeper;
-import com.wanghui.weibo.util.Constants;
+import com.util.AccessTokenKeeper;
+import com.util.Constants;
+
+import java.io.File;
 
 public class MainActivity extends Activity {
 
@@ -39,7 +43,6 @@ public class MainActivity extends Activity {
     private Oauth2AccessToken mAccessToken;
 
     private ImageView mToTop;
-    private ListView lv;
     private PullToRefreshRecyclerView mPtrrv;
 
     private String TAG = "MainActivity";
@@ -54,8 +57,10 @@ public class MainActivity extends Activity {
     private boolean refreshNow = true;
 
     private PopupWindow mPw;
-    private ImageView mSettingsMenu;
+    ImageView mSettingsMenu;
     private ImageView mAddMenu;
+
+    public static final int REQUEST_FOR_ADD = 0;
 
 
     @Override
@@ -165,6 +170,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Bitmap bitmap = null;
+        if (requestCode == REQUEST_FOR_ADD) {
+            if (resultCode == RESULT_OK) {
+                String filePath = data.getStringExtra("image");
+                File imageFile = new File(filePath);
+                if (imageFile.exists()) {
+                    bitmap = BitmapFactory.decodeFile(filePath);
+                    //mStatusesAPI.upload(data.getStringExtra("text"), bitmap, "0", "0", mReListener);     //上传时oom
+                }
+            }
+            return;
+        }
         if (mSsoHandler != null) {
             mSsoHandler.authorizeCallBack(requestCode, resultCode, data);
         }
@@ -253,13 +270,13 @@ public class MainActivity extends Activity {
                     }
 
                 } else if (response.startsWith("{\"created_at\"")) {
-                    /*// 调用 Status#parse 解析字符串成微博对象
+                    // 调用 Status#parse 解析字符串成微博对象
                     Status status = Status.parse(response);
-                    Toast.makeText(WBStatusAPIActivity.this,
+                    Toast.makeText(MainActivity.this,
                             "发送一送微博成功, id = " + status.id,
-                            Toast.LENGTH_LONG).show();*/
+                            Toast.LENGTH_LONG).show();
                 } else {
-                    /*Toast.makeText(WBStatusAPIActivity.this, response, Toast.LENGTH_LONG).show();*/
+                    Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
                 }
             }
         }
@@ -303,7 +320,8 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.add:
-                    //startActivityForResult(new Intent());
+                    startActivityForResult(new Intent(MainActivity.this, AddNewWeibo.class), REQUEST_FOR_ADD);
+                    mPw.dismiss();
                     break;
                 case R.id.settings:
                     startActivity(new Intent(MainActivity.this, SettingsActivity.class));

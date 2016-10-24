@@ -99,4 +99,11 @@
     <string name="action_settings">Settings</string>
     <string name="demo_loadmore">load more</string>
     <string name="title_activity_settings">SettingsActivity</string>
+
+    <string name="title_activity_add_new_weibo">AddNewWeibo</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <string name="post">发布</string>
+    <string name="add_new_weibo_hint">  说点什么呢。。。</string>
 </resources>
