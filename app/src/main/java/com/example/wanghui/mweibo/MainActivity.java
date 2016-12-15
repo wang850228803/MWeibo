@@ -17,13 +17,17 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
+import com.example.wanghui.weibo_sdk.StatusAPI;
 import com.lhh.ptrrv.library.PullToRefreshRecyclerView;
 import com.sina.weibo.sdk.auth.AuthInfo;
 import com.sina.weibo.sdk.auth.Oauth2AccessToken;
 import com.sina.weibo.sdk.auth.WeiboAuthListener;
 import com.sina.weibo.sdk.auth.sso.SsoHandler;
 import com.sina.weibo.sdk.exception.WeiboException;
-import com.sina.weibo.sdk.net.RequestListener;
 import com.sina.weibo.sdk.openapi.StatusesAPI;
 import com.sina.weibo.sdk.openapi.models.ErrorInfo;
 import com.sina.weibo.sdk.openapi.models.Status;
@@ -93,7 +97,7 @@ public class MainActivity extends Activity {
                 //do loadmore here
                 refreshNow = false;
                 loadNow = true;
-                loadWeibo(0, max_id);
+                loadWeibo(max_id, 0);
             }
         });
 
@@ -104,7 +108,7 @@ public class MainActivity extends Activity {
                 // do refresh here
                 refreshNow = true;
                 loadNow = false;
-                loadWeibo(since_id, 0);
+                loadWeibo(0, since_id);
             }
         });
 
@@ -129,7 +133,7 @@ public class MainActivity extends Activity {
             mAccessToken = AccessTokenKeeper.readAccessToken(this);
             Log.i("------------", mAccessToken + "");
             mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
-            loadWeibo(since_id, max_id);
+            loadWeibo(max_id, since_id);
         } else {
             authorize();
         }
@@ -146,7 +150,7 @@ public class MainActivity extends Activity {
                     mPtrrv.setRefreshing(true);
                     refreshNow = true;
                     loadNow = false;
-                    loadWeibo(since_id, 0);
+                    loadWeibo(0, since_id);
                     break;
                 default:
                     break;
@@ -160,10 +164,13 @@ public class MainActivity extends Activity {
         mSsoHandler.authorize(new AuthListener());
     }
 
-    public void loadWeibo(long startId, long endId) {
+    public void loadWeibo(long maxId, long sinceId) {
         if (mAccessToken != null && mAccessToken.isSessionValid()) {
-            Log.i(TAG, "load weibo...startID="+startId+" endID:" + endId);
-            mStatusesAPI.friendsTimeline(startId, endId, 100, 1, false, 0, false, mReListener);
+            Log.i(TAG, "load weibo...sinceId="+sinceId+" maxId:" + maxId);
+            //mStatusesAPI.friendsTimeline(startId, endId, 100, 1, false, 0, false, mReListener);
+            RequestQueue mQueue = Volley.newRequestQueue(this);
+            StatusAPI statusAPI = new StatusAPI(mQueue);
+            statusAPI.homeTimeline(mAccessToken.getToken(), maxId, sinceId, 100, 1, 0, 0, 0, mReListener,errorListener);
         }
     }
 
@@ -206,7 +213,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this,
                         R.string.weibosdk_toast_auth_success, Toast.LENGTH_SHORT).show();
                 mStatusesAPI = new StatusesAPI(MainActivity.this, Constants.APP_KEY, mAccessToken);
-                loadWeibo(since_id, max_id);
+                loadWeibo(max_id, since_id);
             } else {
                 // 以下几种情况，您会收到 Code：
                 // 1. 当您未在平台上注册的应用程序的包名与签名时；
@@ -235,7 +242,65 @@ public class MainActivity extends Activity {
         }
     }
 
-    private RequestListener mReListener = new RequestListener() {
+    private Response.Listener<String> mReListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            if (!TextUtils.isEmpty(response)) {
+                Log.i(TAG, response);
+                if (response.startsWith("{\"statuses\"")) {
+                    // 调用 StatusList#parse 解析字符串成微博列表对象
+                    statuses = StatusList.parse(response);
+                    if (statuses != null && statuses.statusList != null && statuses.statusList.size() > 0) {
+                        if (refreshNow) {
+                            since_id = Long.parseLong(statuses.statusList.get(0).id);
+                        }
+                        if (loadNow)
+                            max_id = Long.parseLong(statuses.statusList.get(statuses.statusList.size() - 1).id);
+                        if (!refreshNow) {
+                            mAdapter.statusList.remove(mAdapter.statusList.size() - 1);
+                            mAdapter.addStatus(statuses.statusList);
+                        }
+                        else {
+                            mAdapter.statusList.addAll(0, statuses.statusList);
+                            mPtrrv.setOnRefreshComplete();
+                        }
+
+                        //mAdapter.setCount(DEFAULT_ITEM_SIZE + ITEM_SIZE_OFFSET);
+                        mAdapter.notifyDataSetChanged();
+                        mPtrrv.onFinishLoading(true, false);
+                    } else {
+                        //Once the statuses.statusList.size() = 0, it will always be 0.
+                        if (loadNow)
+                            mPtrrv.setOnLoadMoreComplete();
+                        if (refreshNow)
+                            mPtrrv.setOnRefreshComplete();
+                    }
+
+                } else if (response.startsWith("{\"created_at\"")) {
+                    // 调用 Status#parse 解析字符串成微博对象
+                    Status status = Status.parse(response);
+                    Toast.makeText(MainActivity.this,
+                            "发送一送微博成功, id = " + status.id,
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, response, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    };
+
+    private Response.ErrorListener errorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            mPtrrv.onFinishLoading(true, true);
+            mPtrrv.setOnRefreshComplete();
+            Log.e(TAG, error.toString());
+            ErrorInfo info = ErrorInfo.parse(error.toString());
+            Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
+        }
+    };
+
+    /*private RequestListener mReListener = new RequestListener() {
         @Override
         public void onComplete(String response) {
             if (!TextUtils.isEmpty(response)) {
@@ -289,7 +354,7 @@ public class MainActivity extends Activity {
             ErrorInfo info = ErrorInfo.parse(e.getMessage());
             Toast.makeText(MainActivity.this, info.toString(), Toast.LENGTH_LONG).show();
         }
-    };
+    };*/
 
     @Override
     protected void onResume() {

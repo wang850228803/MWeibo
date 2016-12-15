@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':weibo-sdk', ':volley'
 include ':TouchGallery'
